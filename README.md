@@ -1,5 +1,7 @@
 # realtime_chat
 
+(Click here to visit app)[https://realtime-chat-psi-six.vercel.app/]
+
 Private, self‑destructing chat built with Next.js + Upstash Realtime + Redis.
 
 - Frontend: Next.js (app router, React 19)
