@@ -13,6 +13,13 @@ export const proxy: NextProxy = async (req) => {
 
   const roomId = roomMatch[1]
 
+  // Check for telegram bot user agent
+  const userAgent = req.headers.get('user-agent') || ''
+  const isTelegramBot = /TelegramBot/i.test(userAgent)
+  if (isTelegramBot) {
+    return NextResponse.next()
+  }
+
   const meta = await redis.hgetall<{ connected: string[]; createdAt: number }>(`meta:${roomId}`)
 
   if (!meta) {
@@ -25,7 +32,7 @@ export const proxy: NextProxy = async (req) => {
     return NextResponse.next()
   }
 
-  if (meta.connected.length > 2) {
+  if (meta.connected.length >= 2) {
     return NextResponse.redirect(new URL('/?error=room-full', req.url))
   }
 
