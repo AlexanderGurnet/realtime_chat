@@ -25,7 +25,7 @@ export const proxy: NextProxy = async (req) => {
     return NextResponse.next()
   }
 
-  if (meta.connected.length >= 2) {
+  if (meta.connected.length > 2) {
     return NextResponse.redirect(new URL('/?error=room-full', req.url))
   }
 
