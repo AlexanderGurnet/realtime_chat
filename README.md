@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# realtime_chat
 
-## Getting Started
+Private, self‑destructing chat built with Next.js + Upstash Realtime + Redis.
 
-First, run the development server:
+- Frontend: Next.js (app router, React 19)
+- Realtime: Upstash Realtime
+- API: Elysia routes under /api
+- Storage: Upstash Redis
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Quick highlights
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Rooms auto-expire (TTL ~10 minutes)
+- Max 2 participants per room (enforced by middleware proxy)
+- Messages stored in Redis list per room and masked per-client
+- Room destroy emits `chat.destroy` to clients and deletes room data
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Environment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- UPSTASH_REDIS_REST_URL
+- UPSTASH_REDIS_REST_TOKEN
+  Add them to `.env` (example present in repo).
 
-## Learn More
+Important routes
 
-To learn more about Next.js, take a look at the following resources:
+- POST /api/room/create -> create room (returns roomId)
+- GET /api/room/ttl?roomId=... -> remaining TTL
+- DELETE /api/room?roomId=... -> destroy room (emits destroy event)
+- POST /api/messages?roomId=... -> send message
+- GET /api/messages?roomId=... -> fetch message history
+- GET /api/realtime -> Upstash realtime handler
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+How auth works
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Proxy (src/proxy.ts) sets an `auth-token` cookie when visiting /room/:roomId
+- Proxy enforces room membership and max 2 peers
+- API auth middleware checks `meta:{roomId}.connected` for valid token
 
-## Deploy on Vercel
+Run locally
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Copy .env and fill Upstash values
+2. npm install
+3. npm run dev
+4. Open http://localhost:3000
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Scripts
+
+- npm run dev
+- npm run build
+- npm start
+- npm run lint
+
+Deploy
+
+- Works on Vercel (ensure Upstash env vars are configured).
+- Proxy middleware relies on Next middleware support in the platform.
